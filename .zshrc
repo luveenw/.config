@@ -101,6 +101,8 @@ configure_nvims() {
 configure_project_aliases() {
 	alias abr="~/code/alle-backend-rewards"
 	alias afe="~/code/alle-frontend"
+	alias abrc="~/code/alle-backend-rewards-checkout"
+	alias abst="~/code/alle-backend-service-transactions"
 }
 
 configure_nvims
