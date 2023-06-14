@@ -48,3 +48,36 @@ require("lazy").setup({
 require("catppuccin").setup({
   flavour = "frappe",
 })
+
+-- neovim-session-manager toggle to show neo-tree explorer pane after loading a session
+-- local config_group = vim.api.nvim_create_augroup("MyConfigGroup", {}) -- A global group for all your config autocommands
+
+-- vim.api.nvim_create_autocmd({ "User" }, {
+--   pattern = "SessionLoadPost",
+--   group = config_group,
+--   callback = function()
+--     vim.cmd([[NeoTreeShow]])
+--   end,
+-- })
+--
+-- bookmarks default setup
+require("bookmarks").setup({
+  sign_priority = 8, --set bookmark sign priority to cover other sign
+  save_file = vim.fn.expand("$HOME/.bookmarks"), -- bookmarks save file path
+  keywords = {
+    ["@t"] = "☑️ ", -- mark annotation startswith @t ,signs this icon as `Todo`
+    ["@w"] = "⚠️ ", -- mark annotation startswith @w ,signs this icon as `Warn`
+    ["@f"] = "⛏ ", -- mark annotation startswith @f ,signs this icon as `Fix`
+    ["@n"] = "📗", -- mark annotation startswith @n ,signs this icon as `Note`
+  },
+  on_attach = function()
+    local bm = require("bookmarks")
+    local map = vim.keymap.set
+    map("n", "mm", bm.bookmark_toggle, { desc = "Toggle bookmark" }) -- add or remove bookmark at current line
+    map("n", "mi", bm.bookmark_ann, { desc = "Edit bookmark annotation" }) -- add or edit mark annotation at current line
+    map("n", "mc", bm.bookmark_clean, { desc = "Clear all bookmarks in current buffer" }) -- clean all marks in local buffer
+    map("n", "mn", bm.bookmark_next, { desc = "Go to next bookmark in buffer" }) -- jump to next mark in local buffer
+    map("n", "mp", bm.bookmark_prev, { desc = "Go to previous bookmark in buffer" }) -- jump to previous mark in local buffer
+    -- map("n", "ml", bm.bookmark_list) -- show marked file list in quickfix window
+  end,
+})
