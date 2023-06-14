@@ -132,3 +132,21 @@ export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+# [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# fnm
+export PATH="/Users/wadhwlr/Library/Application Support/fnm:$PATH"
+eval "`fnm env`"
+
+# set alle-backend-rewards NPM_TOKEN
+export NPM_TOKEN="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"
+
+# set PYTHON for Docker builds with Node 14.x
+export PYTHON=/usr/bin/python3
+
+# set puppeteer flags for Docker builds on M1 Macs
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`

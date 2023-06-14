@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "lerna": "^7.0.0",
+    "serverless": "^3.32.2"
+  }
+}

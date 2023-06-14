@@ -38,3 +38,11 @@ vim.keymap.set("v", "<leader>sw", '<esc><cmd>lua require("spectre").open_visual(
 vim.keymap.set("n", "<leader>sp", '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', {
   desc = "Search on current file",
 })
+
+-- move line(s) up/down
+vim.keymap.set("n", "<C-A-Up>", "<cmd>m .-2<CR>==", { noremap = true })
+vim.keymap.set("n", "<C-A-Down>", "<cmd>m .+1<CR>==", { noremap = true })
+vim.keymap.set("i", "<C-A-Up>", "<Esc><cmd>m .-2<CR>==gi", { noremap = true })
+vim.keymap.set("i", "<C-A-Down>", "<Esc><cmd>m .+1<CR>==gi", { noremap = true })
+vim.keymap.set("v", "<C-A-Up>", "<cmd>m '<-2<CR>gv=gv", { noremap = true })
+vim.keymap.set("v", "<C-A-Down>", "<cmd>m '>+1<CR>gv=gv", { noremap = true })
