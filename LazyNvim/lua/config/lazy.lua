@@ -81,3 +81,6 @@ require("bookmarks").setup({
     -- map("n", "ml", bm.bookmark_list) -- show marked file list in quickfix window
   end,
 })
+
+-- enable git blamer on startup
+vim.g.blamer_enabled = 1
