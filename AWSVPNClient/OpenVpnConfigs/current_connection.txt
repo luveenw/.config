@@ -1,0 +1,2 @@
+/Users/wadhwlr/.config/AWSVPNClient/OpenVpnConfigs/dev
+1687971316

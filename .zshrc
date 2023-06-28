@@ -146,6 +146,10 @@ export NPM_TOKEN="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"
 
 # set PYTHON for Docker builds with Node 14.x
 export PYTHON=/usr/bin/python3
+alias python="python3"
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # set puppeteer flags for Docker builds on M1 Macs
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
