@@ -105,9 +105,51 @@ configure_project_aliases() {
 	alias bst="~/code/alle-backend-service-transactions"
 }
 
+configure_db() {
+	alias db_dev="db dev"
+	alias db_dev2="db dev2"
+	alias db_stage="db stage"
+	alias db_demo="db demo"
+
+	function db() {
+	  items=("local" "dev" "dev2" "stage" "demo")
+	  config=$(printf "%s\n" "${items[@]}" | fzf --prompt=" DB Connection Selector  " --height=~50% --layout=reverse --border --exit-0)
+	  if [[ -z $config ]]; then
+	    echo "Nothing selected"
+	    return 0
+	  fi
+
+	  echo $fg_bold[cyan]"Selected environment "$fg_bold[magenta]"${config}"$reset_color"."
+
+	  if [[ "x${config}x" == "xlocalx" ]]; then
+	  	ENVIRONMENT=local
+	  	USER_NAME=postgres
+	  	ENDPOINT=localhost
+	  	TOKEN=postgres
+	  	echo $fg[magenta]"Ensuring ${ENVIRONMENT} Docker DB is up before connecting to Postgres command-line client..." $reset_color
+	  	DOCKER_DEFAULT_PLATFORM=amd/x64 docker-compose up -d db && psql "host=$ENDPOINT port=5432 dbname=postgres user=$USER_NAME password=$TOKEN"
+	  else
+	    ENVIRONMENT="alle-${config}"
+	    autoload colors; colors
+        echo $fg_bold[yellow]"\n~~ Ensure you have a profile named ${ENVIRONMENT} in ~/.aws/config, and that you are connected to ${config} on AWS VPN. ~~\n"$reset_color
+
+	    USER_NAME=iam_readonly_role
+	    ENDPOINT=$(aws-vault exec $ENVIRONMENT -- aws rds describe-db-proxies --db-proxy-name alle-shared-iam-auth --region us-west-2 --query 'DBProxies[0].Endpoint' --output text)
+	    echo $fg[magenta]"Requesting AWS DB token via endpoint ${ENDPOINT}..."$reset_color
+	    TOKEN=$(aws-vault exec $ENVIRONMENT -- aws rds generate-db-auth-token --hostname $ENDPOINT --port 5432 --region us-west-2 --username $USER_NAME)
+	    echo "\nObtained access token:\n${TOKEN}"
+	    echo "\n"$fg[magenta]"Connecting to ${ENVIRONMENT} Postgres command-line client..."$reset_color
+	    psql "host=$ENDPOINT port=5432 sslmode=verify-full sslrootcert=/tmp/AmazonRootCA1.pem dbname=loyalty user=$USER_NAME password=$TOKEN"
+	  fi
+	}
+
+	bindkey -s ^b "db\n"
+}
+
 configure_nvims
 configure_project_aliases
-export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH
+configure_db
+export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/usr/local/bin:~/.pyenv/bin:$PATH
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -141,8 +183,45 @@ export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:$PATH
 export PATH="/Users/wadhwlr/Library/Application Support/fnm:$PATH"
 eval "`fnm env`"
 
-# set alle-backend-rewards NPM_TOKEN
-export NPM_TOKEN="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"
+# Set/refresh alle-backend-rewards NPM_TOKEN from 1Password
+# Checks if 1Password CLI is installed and logged into ADL account
+get_npm_token_abr() {
+	# Verify 1Password CLI is installed
+	if [ "x$(command -v op)" = "x" ]; then
+		cat << EOF
+
+The 1Password CLI is not available. Download and install at https://developer.1password.com/docs/cli/get-started#install\n
+
+EOF
+		return
+	fi
+
+	# Check if the 1Password CLI has previously logged in to the ADL account
+	if [[ "$(op account list | grep team_adl | wc -l | tr -d " ")" == "0" ]]; then
+		cat << EOF
+
+The 1Password CLI is not logged in to the ADL account. Login using one of the following methods:
+1) eval \$(op signin)
+2) op account add (instructions at https://developer.1password.com/docs/cli/sign-in-manually)
+3) Use the desktop 1Password app (instructions at https://developer.1password.com/docs/cli/get-started/#sign-in)
+
+EOF
+		return
+	fi
+
+	# Log in to 1Password ADL account if needed
+	if  [[ $(op whoami 2>&1) == \[ERROR\]* ]]; then
+		echo "\nSigning into 1Password..."
+		eval $(op signin)
+	fi
+
+	echo "\nFetching latest NPM token..."
+	export NPM_TOKEN=$(op item list --tags npm_token,latest --format json | op item get - | grep notesPlain | cut -d':' -f2 | tr -d " ")
+	echo "\nTo make the latest NPM token available in new shell sessions, add the following line to your login shell script (normally ~/.bashrc, ~/.zshrc, or ~/.profile):\n"
+	echo "export NPM_TOKEN=${NPM_TOKEN}\n"
+}
+
+
 
 # set PYTHON for Docker builds with Node 14.x
 export PYTHON=/usr/bin/python3
@@ -154,3 +233,10 @@ export NVM_DIR="$HOME/.nvm"
 # set puppeteer flags for Docker builds on M1 Macs
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+
+# install Python using pyenv https://adl-technology.atlassian.net/wiki/spaces/CONSMR/pages/3006922859/Alle+Backend+Rewards+Yarn+Install
+setup_pyenv() {
+	command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+	eval "$(pyenv init -)"
+	eval "$(pyenv virtualenv-init -)"
+}
