@@ -106,6 +106,7 @@ configure_project_aliases() {
 }
 
 configure_db() {
+	alias db_local="db local"
 	alias db_dev="db dev"
 	alias db_dev2="db dev2"
 	alias db_stage="db stage"
@@ -127,6 +128,11 @@ configure_db() {
 	  	ENDPOINT=localhost
 	  	TOKEN=postgres
 	  	echo $fg[magenta]"Ensuring ${ENVIRONMENT} Docker DB is up before connecting to Postgres command-line client..." $reset_color
+	  	cat << EOF
+Try this line to connect to the DB in case it doesn't work the first time:
+DOCKER_DEFAULT_PLATFORM=amd/x64 docker-compose up -d db && psql "host=\$ENDPOINT port=5432 dbname=postgres user=\$USER_NAME password=\$TOKEN"
+
+EOF
 	  	DOCKER_DEFAULT_PLATFORM=amd/x64 docker-compose up -d db && psql "host=$ENDPOINT port=5432 dbname=postgres user=$USER_NAME password=$TOKEN"
 	  else
 	    ENVIRONMENT="alle-${config}"
@@ -216,12 +222,12 @@ EOF
 	fi
 
 	echo "\nFetching latest NPM token..."
-	export NPM_TOKEN=$(op item list --tags npm_token,latest --format json | op item get - | grep notesPlain | cut -d':' -f2 | tr -d " ")
+	export NPM_TOKEN=$(op item list --categories "api credential" --tags npm_token,latest --format json | op item get --fields label=credential)
 	echo "\nTo make the latest NPM token available in new shell sessions, add the following line to your login shell script (normally ~/.bashrc, ~/.zshrc, or ~/.profile):\n"
 	echo "export NPM_TOKEN=${NPM_TOKEN}\n"
 }
 
-
+export NPM_TOKEN="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"
 
 # set PYTHON for Docker builds with Node 14.x
 export PYTHON=/usr/bin/python3
