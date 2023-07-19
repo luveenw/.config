@@ -224,10 +224,10 @@ EOF
 	echo "\nFetching latest NPM token..."
 	export NPM_TOKEN=$(op item list --categories "api credential" --tags npm_token,latest --format json | op item get --fields label=credential)
 	echo "\nTo make the latest NPM token available in new shell sessions, add the following line to your login shell script (normally ~/.bashrc, ~/.zshrc, or ~/.profile):\n"
-	echo "export NPM_TOKEN=${NPM_TOKEN}\n"
+	echo "export NPM_TOKEN=\"${NPM_TOKEN}\"\n"
 }
 
-export NPM_TOKEN="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"
+export NPM_TOKEN="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"
 
 # set PYTHON for Docker builds with Node 14.x
 export PYTHON=/usr/bin/python3
