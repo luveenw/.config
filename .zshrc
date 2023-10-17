@@ -111,9 +111,11 @@ configure_db() {
 	alias db_dev2="db dev2"
 	alias db_stage="db stage"
 	alias db_demo="db demo"
+	alias db_prod="db prod"
 
 	function db() {
-	  items=("local" "dev" "dev2" "stage" "demo")
+	  echo "received args $*"
+	  items=("local" "dev" "dev2" "catalog-stage" "stage" "demo" "prod")
 	  config=$(printf "%s\n" "${items[@]}" | fzf --prompt=" DB Connection Selector  " --height=~50% --layout=reverse --border --exit-0)
 	  if [[ -z $config ]]; then
 	    echo "Nothing selected"
@@ -140,22 +142,35 @@ EOF
         echo $fg_bold[yellow]"\n~~ Ensure you have a profile named ${ENVIRONMENT} in ~/.aws/config, and that you are connected to ${config} on AWS VPN. ~~\n"$reset_color
 
 	    USER_NAME=iam_readonly_role
+	    if [[ "x${config}x" == "xcatalog-stagex" ]]; then
+	    	USER_NAME=iam_readwrite_service_catalog
+	    elif [[ "x${config}x" == "xstagex" ]]; then
+	    	USER_NAME=iam_readwrite_role
+	    fi
 	    ENDPOINT=$(aws-vault exec $ENVIRONMENT -- aws rds describe-db-proxies --db-proxy-name alle-shared-iam-auth --region us-west-2 --query 'DBProxies[0].Endpoint' --output text)
-	    echo $fg[magenta]"Requesting AWS DB token via endpoint ${ENDPOINT}..."$reset_color
+	    echo $fg[magenta]"Requesting AWS DB token via endpoint ${ENDPOINT}... (running command aws-vault exec $ENVIRONMENT -- aws rds generate-db-auth-token --hostname $ENDPOINT --port 5432 --region us-west-2 --username $USER_NAME)"$reset_color
 	    TOKEN=$(aws-vault exec $ENVIRONMENT -- aws rds generate-db-auth-token --hostname $ENDPOINT --port 5432 --region us-west-2 --username $USER_NAME)
 	    echo "\nObtained access token:\n${TOKEN}"
-	    echo "\n"$fg[magenta]"Connecting to ${ENVIRONMENT} Postgres command-line client..."$reset_color
-	    psql "host=$ENDPOINT port=5432 sslmode=verify-full sslrootcert=/tmp/AmazonRootCA1.pem dbname=loyalty user=$USER_NAME password=$TOKEN"
+	    if [[ $# == 0 ]]; then
+	    	echo "\n"$fg[magenta]"Connecting to ${ENVIRONMENT} Postgres command-line client..."$reset_color
+	    	echo psql "host=$ENDPOINT port=5432 sslmode=verify-full sslrootcert=/tmp/AmazonRootCA1.pem dbname=catalog user=$USER_NAME password=$TOKEN"
+	    	psql "host=$ENDPOINT port=5432 sslmode=verify-full sslrootcert=/tmp/AmazonRootCA1.pem dbname=catalog user=$USER_NAME password=$TOKEN"
+		fi
 	  fi
 	}
 
 	bindkey -s ^b "db\n"
 }
 
+fetch_amazon_root_ca_pem() {
+	curl -L https://www.amazontrust.com/repository/AmazonRootCA1.pem --output /tmp/AmazonRootCA1.pem
+}
+alias rootca=fetch_amazon_root_ca_pem
+
 configure_nvims
 configure_project_aliases
 configure_db
-export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/usr/local/bin:~/.pyenv/bin:$PATH
+export PATH=/opt/homebrew/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/Cellar/git/2.42.0/bin:/usr/local/bin:~/.pyenv/bin:$PATH
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -227,7 +242,7 @@ EOF
 	echo "export NPM_TOKEN=\"${NPM_TOKEN}\"\n"
 }
 
-export NPM_TOKEN="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"
+export NPM_TOKEN="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"
 
 # set PYTHON for Docker builds with Node 14.x
 export PYTHON=/usr/bin/python3
@@ -246,3 +261,25 @@ setup_pyenv() {
 	eval "$(pyenv init -)"
 	eval "$(pyenv virtualenv-init -)"
 }
+
+alias rezsh=". ~/.zshrc"
+#compdef gt
+###-begin-gt-completions-###
+#
+# yargs command completion script
+#
+# Installation: gt completion >> ~/.zshrc
+#    or gt completion >> ~/.zprofile on OSX.
+#
+_gt_yargs_completions()
+{
+  local reply
+  local si=$IFS
+  IFS=$'
+' reply=($(COMP_CWORD="$((CURRENT-1))" COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" gt --get-yargs-completions "${words[@]}"))
+  IFS=$si
+  _describe 'values' reply
+}
+compdef _gt_yargs_completions gt
+###-end-gt-completions-###
+
